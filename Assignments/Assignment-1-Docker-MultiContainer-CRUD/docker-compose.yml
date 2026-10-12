@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  db:
+    image: mongo:6.0
+    container_name: devops-mongo-db
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - devops_network
+
+  app:
+    build: .
+    container_name: devops-crud-app
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=mongodb://db:27017/devops_crud
+    depends_on:
+      - db
+    networks:
+      - devops_network
+
+volumes:
+  mongo_data:
+    driver: local
+
+networks:
+  devops_network:
+    driver: bridge
