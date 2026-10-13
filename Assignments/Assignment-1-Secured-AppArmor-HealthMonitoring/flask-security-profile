@@ -1,0 +1,27 @@
+#include <tunables/global>
+
+profile flask-auth-profile flags=(attach_disconnected,mediate_deleted) {
+    #include <abstractions/base>
+    #include <abstractions/python>
+
+    # Deny access to sensitive host and system configurations
+    deny /etc/shadow* rwx,
+    deny /etc/passwd* w,
+    deny /etc/sudoers* rwx,
+    deny /root/** rwx,
+    deny /proc/sys/** rwx,
+    deny /sys/** rwx,
+
+    # Allow network capabilities for serving HTTP traffic
+    network inet stream,
+    network inet6 stream,
+
+    # Allow read and execution of application code
+    /app/** r,
+    /usr/local/bin/python* ix,
+    /usr/local/lib/python*/** r,
+
+    # Allow read/write access to persistent storage for SQLite
+    /data/** rw,
+    /tmp/** rw,
+}

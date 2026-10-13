@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  auth-app:
+    build: .
+    container_name: secured-auth-app
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - user_data:/data
+    networks:
+      - secure_network
+
+volumes:
+  user_data:
+    driver: local
+
+networks:
+  secure_network:
+    driver: bridge
