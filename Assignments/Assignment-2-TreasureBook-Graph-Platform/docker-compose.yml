@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: treasurebook-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - treasurebook_data:/data/db
+
+  treasurebook-api:
+    build: .
+    container_name: treasurebook-api
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/treasurebook
+    depends_on:
+      - mongodb
+
+volumes:
+  treasurebook_data:
+    driver: local

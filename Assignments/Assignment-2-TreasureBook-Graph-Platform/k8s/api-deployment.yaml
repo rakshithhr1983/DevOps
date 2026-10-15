@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: treasurebook-api
+  labels:
+    app: treasurebook-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: treasurebook-api
+  template:
+    metadata:
+      labels:
+        app: treasurebook-api
+    spec:
+      containers:
+        - name: treasurebook-api
+          image: treasurebook-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: MONGO_URI
+              value: "mongodb://mongodb:27017/treasurebook"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 200m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
