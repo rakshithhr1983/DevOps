@@ -1,0 +1,42 @@
+name: VisualCraft AI Service CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: |
+          cd DevOps/Assignments/Assignment-3-VisualCraft-AI-Artistic
+          pip install -r requirements.txt
+
+      - name: Run Pytest Suite
+        run: |
+          cd DevOps/Assignments/Assignment-3-VisualCraft-AI-Artistic
+          pytest tests/ -v
+
+      - name: Deploy with Docker Compose
+        run: |
+          cd DevOps/Assignments/Assignment-3-VisualCraft-AI-Artistic
+          docker-compose up -d --build
+
+      - name: Verify Service Health & Test Style Transfer
+        run: |
+          cd DevOps/Assignments/Assignment-3-VisualCraft-AI-Artistic
+          sleep 5
+          curl -f http://127.0.0.1:5001/health
+          curl -X POST http://127.0.0.1:5001/styleTransfer -F "image=@test.jpg" --output styled_output.jpg
+          test -s styled_output.jpg

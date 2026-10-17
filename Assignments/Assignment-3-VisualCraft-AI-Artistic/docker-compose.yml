@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  ai-artistic-style-service:
+    build: .
+    image: urmsandeep/ai-artistic-style-service:latest
+    container_name: ai-artistic-style
+    restart: always
+    ports:
+      - "5001:5001"
+    networks:
+      - visualcraft-net
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: visualcraft-prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - visualcraft-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: visualcraft-grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+    depends_on:
+      - prometheus
+    networks:
+      - visualcraft-net
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: visualcraft-cadvisor
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - visualcraft-net
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: visualcraft-node-exporter
+    restart: always
+    ports:
+      - "9100:9100"
+    networks:
+      - visualcraft-net
+
+networks:
+  visualcraft-net:
+    driver: bridge

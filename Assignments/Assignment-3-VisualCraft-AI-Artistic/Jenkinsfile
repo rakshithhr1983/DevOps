@@ -1,0 +1,70 @@
+pipeline {
+    agent any
+
+    environment {
+        SERVICE_NAME = "ai-artistic-style"
+        IMAGE_NAME = "urmsandeep/ai-artistic-style-service:latest"
+    }
+
+    stages {
+        stage('Pull Docker Image') {
+            steps {
+                echo 'Pulling AI Artistic Style Service Docker Image from Docker Hub...'
+                script {
+                    sh "docker pull ${IMAGE_NAME} || echo 'Image pull fallback to local build'"
+                }
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                echo 'Executing pytest automated verification suite...'
+                script {
+                    sh '''
+                    python -m pytest tests/ -v || pytest tests/ -v
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy Service') {
+            steps {
+                echo 'Deploying AI Artistic Style Service and Monitoring Stack via Docker Compose...'
+                script {
+                    sh '''
+                    docker-compose down || true
+                    docker-compose up --build -d
+                    '''
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                echo 'Verifying service readiness and running Style Transfer smoke test...'
+                script {
+                    sh '''
+                    echo "Waiting 5 seconds for service warm-up..."
+                    sleep 5
+                    curl --fail --retry 3 --retry-delay 2 http://127.0.0.1:5001/health || exit 1
+                    curl -X POST http://127.0.0.1:5001/styleTransfer -F "image=@test.jpg" --output styled_output.jpg
+                    test -s styled_output.jpg && echo "Styled output successfully generated!" || exit 1
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up intermediate dangling Docker containers and resources...'
+            sh 'docker system prune -f || true'
+        }
+        success {
+            echo 'Pipeline executed successfully. VisualCraft AI Artistic Style Service is live and monitored!'
+        }
+        failure {
+            echo 'Pipeline execution failed. Review build console logs for debugging.'
+        }
+    }
+}
